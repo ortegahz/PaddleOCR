@@ -36,6 +36,8 @@ from tools.infer.utility import draw_ocr_box_txt_pc
 
 logger = get_logger()
 
+path_in = '/home/manu/tmp/ocr.mp4'
+dir_out = '/home/manu/tmp/result_ocr'
 
 class TextSystem(object):
     def __init__(self, args):
@@ -141,22 +143,30 @@ def sorted_boxes(dt_boxes):
 
 
 def main(args):
-    image_file_list = get_image_file_list(args.image_dir)
+    os.system('rm %s -rvf' % dir_out)
+    os.makedirs(dir_out)
+
     text_sys = TextSystem(args)
     is_visualize = True
     font_path = args.vis_font_path
     drop_score = args.drop_score
-    for image_file in image_file_list:
-        img, flag = check_and_read_gif(image_file)
-        if not flag:
-            img = cv2.imread(image_file)
-        if img is None:
-            logger.info("error in loading image:{}".format(image_file))
-            continue
+
+    cap = cv2.VideoCapture(path_in)
+
+    idx = 0
+    while cap.isOpened():
+        ret, img = cap.read()
+        # if frame is read correctly ret is True
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+ 
+        idx += 1
+        
         starttime = time.time()
         dt_boxes, rec_res = text_sys(img)
         elapse = time.time() - starttime
-        logger.info("Predict time of %s: %.3fs" % (image_file, elapse))
+        logger.info("Predict time : %.3fs" % elapse)
 
         for text, score in rec_res:
             logger.info("{}, {:.3f}".format(text, score))
@@ -174,19 +184,12 @@ def main(args):
                 scores,
                 drop_score=drop_score,
                 font_path=font_path)
-            draw_img_save = "./inference_results/"
-            if not os.path.exists(draw_img_save):
-                os.makedirs(draw_img_save)
-            cv2.imwrite(
-                os.path.join(draw_img_save, os.path.basename(image_file)),
-                draw_img[:, :, ::-1])
-            logger.info("The visualized image saved in {}".format(
-                os.path.join(draw_img_save, os.path.basename(image_file))))
 
             draw_img = cv2.cvtColor(draw_img, cv2.COLOR_BGR2RGB)
-            cv2.imshow('%s.jpg' % os.path.basename(image_file), draw_img)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            path_out = os.path.join(dir_out, 'frame_%d.jpg' % idx)
+            cv2.imwrite(path_out, draw_img)
+
+    cap.release()
 
 
 if __name__ == "__main__":

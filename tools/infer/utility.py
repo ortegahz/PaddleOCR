@@ -262,6 +262,38 @@ def draw_ocr_box_txt(image,
     return np.array(img_show)
 
 
+def draw_ocr_box_txt_pc(image,
+                     boxes,
+                     txts,
+                     scores=None,
+                     drop_score=0.5,
+                     font_path="./doc/simfang.ttf"):
+
+    h, w = image.height, image.width
+    img_left = image.copy()
+    draw_left = ImageDraw.Draw(img_left)
+
+    for idx, (box, txt) in enumerate(zip(boxes, txts)):
+
+        if scores is not None and scores[idx] < drop_score:
+            continue
+
+        color = (255, 0, 0)
+        draw_left.polygon(box, outline=color)
+
+        box_height = math.sqrt((box[0][0] - box[3][0])**2 + (box[0][1] - box[3][
+            1])**2)
+        font_size = max(int(box_height * 1.8), 10)
+        font = ImageFont.truetype(font_path, font_size, encoding="utf-8")
+        draw_left.text(
+            [box[0][0], box[0][1]], txt, fill=(0, 0, 255), font=font)
+
+    img_left = Image.blend(image, img_left, 0.5)
+    img_show = Image.new('RGB', (w, h), (255, 255, 255))
+    img_show.paste(img_left, (0, 0, w, h))
+    return np.array(img_show)
+
+
 def str_count(s):
     """
     Count the number of Chinese characters,

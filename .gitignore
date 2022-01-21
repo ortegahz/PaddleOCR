@@ -25,3 +25,14 @@ output/
 build/
 dist/
 paddleocr.egg-info/
+log/
+
+pretrain_models/rec_mv3_none_bilstm_ctc_v2\.0_train/
+
+train_data/ic15_data/
+
+doc/imgs/landmark_test\.png
+
+train_data
+
+pretrain_models/mv3_none_bilstm_ctc_official/
